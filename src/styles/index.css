@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+@theme {
+  /* Registramos los colores personalizados para la v4 */
+  --color-stardew-wood: #854d0e;
+  --color-stardew-woodLight: #a16207;
+  --color-stardew-cream: #fef3c7;
+  --color-stardew-creamDark: #fde68a;
+  --color-stardew-green: #15803d;
+  --color-stardew-gold: #eab308;
+  --color-stardew-blue: #1e3a8a;
+
+  /* Registramos la fuente rústica */
+  --font-stardewFont: "Courier New", Courier, monospace;
+
+  /* Registramos la sombra pixel-art */
+  --shadow-pixel: 4px 4px 0px 0px rgba(0, 0, 0, 0.15);
+}
+
 /* Estilos base opcionales para tu temática */
 body {
   background-color: #fef3c7; /* El fondo crema por defecto */
