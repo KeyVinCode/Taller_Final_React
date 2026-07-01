@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* Estilos base opcionales para tu temática */
+body {
+  background-color: #fef3c7; /* El fondo crema por defecto */
+  color: #1e293b;
+}
