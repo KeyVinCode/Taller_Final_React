@@ -29,6 +29,30 @@ export class Login extends Component {
     }));
   };
 
+  /**
+   * Obtiene el rol del usuario desde la tabla pública 'profiles'.
+   * Si no encuentra el perfil, asume 'cliente' por defecto.
+   */
+  obtenerRolUsuario = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_role")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        console.warn("⚠️ No se pudo obtener el rol, se usará 'cliente':", error.message);
+        return "cliente";
+      }
+
+      return data?.user_role || "cliente";
+    } catch (err) {
+      console.warn("⚠️ Error al consultar el rol:", err.message);
+      return "cliente";
+    }
+  };
+
   handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -40,10 +64,6 @@ export class Login extends Component {
       toast.warn("⚠️ ¡Por favor llena todos los campos, granjero!");
       return;
     }
-
-    console.log("--- ENVIANDO CREDENCIALES ESTANDARIZADAS ---");
-    console.log("Correo convertido: [" + correo + "]");
-    console.log("Contraseña capturada: [" + contraseña + "]");
 
     this.setState({ cargando: true });
 
@@ -57,8 +77,17 @@ export class Login extends Component {
       if (error) throw error;
 
       if (data.session) {
-        toast.success("👨‍🌾 ¡Bienvenido de vuelta a la granja!");
-        this.props.navigate('/shop'); 
+        // Consultamos el rol del usuario en la tabla profiles
+        const rol = await this.obtenerRolUsuario(data.user.id);
+
+        // Redirigimos según el rol
+        if (rol === "admin") {
+          toast.success("👨‍🌾 ¡Bienvenido administrador!");
+          this.props.navigate('/admin');
+        } else {
+          toast.success("👨‍🌾 ¡Bienvenido de vuelta a la granja!");
+          this.props.navigate('/shop');
+        }
       }
     } catch (error) {
       console.error("--- DETALLES COMPLETOS DEL ERROR DE AUTENTICACIÓN ---");

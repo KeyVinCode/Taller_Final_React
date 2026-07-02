@@ -43,6 +43,30 @@ export class Register extends Component {
     this.setState({ Nombre: "", correo: "", contraseña: "", rol: "cliente" });
   };
 
+  /**
+   * Inserta manualmente el perfil del usuario en la tabla pública 'profiles'.
+   * Esto respalda al trigger automático de Supabase por si no se ejecuta.
+   */
+  insertarPerfilEnBD = async (userId, email, displayName, rol) => {
+    try {
+      const { error } = await supabase.from("profiles").insert({
+        id: userId,
+        email: email,
+        display_name: displayName,
+        user_role: rol,
+      });
+
+      if (error) {
+        // Si el error es que el perfil ya existe (lo creó el trigger), no pasa nada
+        if (!error.message?.includes("duplicate key")) {
+          console.warn("⚠️ No se pudo insertar perfil manualmente:", error.message);
+        }
+      }
+    } catch (err) {
+      console.warn("⚠️ Error al insertar perfil:", err.message);
+    }
+  };
+
   handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -54,14 +78,14 @@ export class Register extends Component {
     this.setState({ cargando: true });
 
     try {
-      // 2. Registramos al usuario e incluimos el rol 'cliente' de forma oculta y segura
+      // 1. Registramos al usuario en Supabase Auth con metadata (display_name y user_role)
       const { data, error } = await supabase.auth.signUp({
         email: this.state.correo,
         password: this.state.contraseña,
         options: {
           data: {
             display_name: this.state.Nombre,
-            user_role: this.state.rol, // Viaja protegido dentro del JWT
+            user_role: this.state.rol,
           },
         },
       });
@@ -69,12 +93,39 @@ export class Register extends Component {
       if (error) throw error;
 
       if (data.user) {
-        toast.success("🎉 ¡Cuenta de cliente creada con éxito!");
+        // 2. Insertamos manualmente el perfil en la tabla pública 'profiles'
+        await this.insertarPerfilEnBD(
+          data.user.id,
+          this.state.correo,
+          this.state.Nombre,
+          this.state.rol
+        );
+
+        // 3. Verificamos el estado del registro
+        if (data.user.identities && data.user.identities.length === 0) {
+          toast.error("⚠️ Este correo ya está registrado. Intenta iniciar sesión.");
+        } else if (data.session === null) {
+          toast.success(
+            "✅ ¡Registro exitoso! Revisa tu bandeja de entrada y confirma tu correo antes de iniciar sesión.",
+            { autoClose: 6000 }
+          );
+        } else {
+          toast.success("🎉 ¡Cuenta creada con éxito! Ya puedes iniciar sesión.");
+        }
         this.limpiarFormulario();
       }
     } catch (error) {
       console.error("Error al registrar:", error.message);
-      toast.error(`⚠️ Error: ${error.message}`);
+
+      if (error.message?.includes("already registered")) {
+        toast.error("⚠️ Este correo ya está registrado. Intenta iniciar sesión.");
+      } else if (error.message?.includes("weak_password")) {
+        toast.error("🔐 La contraseña es demasiado débil. Usa al menos 6 caracteres.");
+      } else if (error.message?.includes("rate_limit")) {
+        toast.error("⏳ Demasiados intentos. Espera un momento y vuelve a intentar.");
+      } else {
+        toast.error(`⚠️ Error: ${error.message}`);
+      }
     } finally {
       this.setState({ cargando: false });
     }
