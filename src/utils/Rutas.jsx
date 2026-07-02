@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import LandingPage from '../components/Landing/LandingPage'
 import Login from '../components/auth/Login'
 import  Register  from '../components/auth/Register'
+import ShopPage from '../pages/ShopPage'
 
 
 export class Rutas extends Component {
@@ -17,6 +18,7 @@ export class Rutas extends Component {
           <Route path="/" element={<LandingPage/>} />
           <Route path="/Login" element={<Login/>}/>
           <Route path="/Registro" element={<Register/>}/>
+          <Route path="/Shop" element={<ShopPage/>}/>
           
         </Routes>
 

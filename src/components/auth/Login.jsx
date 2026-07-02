@@ -1,11 +1,11 @@
+// src/components/auth/Login.jsx
 import React, { Component } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // 1. Importamos useNavigate
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { supabase } from '../supabaseClient'; // Importación del cliente
+import { supabase } from '../../utils/supabaseClient'; // Ruta corregida según tu árbol de carpetas
 
 export class Login extends Component {
-  
   constructor(props) {
     super(props);
     
@@ -31,17 +31,24 @@ export class Login extends Component {
 
   handleSubmit = async (e) => {
     e.preventDefault();
-    const { correo, contraseña } = this.state;
+    
+    // CORRECCIÓN TÉCNICA: Limpiamos espacios y forzamos el correo a minúsculas
+    const correo = this.state.correo.trim().toLowerCase();
+    const contraseña = this.state.contraseña.trim();
 
     if (!correo || !contraseña) {
       toast.warn("⚠️ ¡Por favor llena todos los campos, granjero!");
       return;
     }
 
+    console.log("--- ENVIANDO CREDENCIALES ESTANDARIZADAS ---");
+    console.log("Correo convertido: [" + correo + "]");
+    console.log("Contraseña capturada: [" + contraseña + "]");
+
     this.setState({ cargando: true });
 
     try {
-      // Envía credenciales y recibe el token de sesión JWT de forma interna
+      // Petición de autenticación con los datos formateados
       const { data, error } = await supabase.auth.signInWithPassword({
         email: correo,
         password: contraseña,
@@ -51,11 +58,12 @@ export class Login extends Component {
 
       if (data.session) {
         toast.success("👨‍🌾 ¡Bienvenido de vuelta a la granja!");
-        // Aquí puedes redirigir al usuario a su panel principal/dashboard
+        this.props.navigate('/shop'); 
       }
     } catch (error) {
-      console.error("Error al iniciar sesión:", error.message);
-      toast.error(`⚠️ Error: Credenciales incorrectas.`);
+      console.error("--- DETALLES COMPLETOS DEL ERROR DE AUTENTICACIÓN ---");
+      console.dir(error);
+      toast.error(`⚠️ Error de acceso: ${error.message}`);
     } finally {
       this.setState({ cargando: false });
     }
@@ -139,4 +147,13 @@ export class Login extends Component {
   }
 }
 
-export default Login;
+// 3. Creamos el HOC para permitir la navegación en componentes de clase (React Router v6)
+function withNavigation(Component) {
+  return function WrappedComponent(props) {
+    const navigate = useNavigate();
+    return <Component {...props} navigate={navigate} />;
+  };
+}
+
+// Exportamos el componente envuelto para que herede la propiedad 'navigate'
+export default withNavigation(Login);

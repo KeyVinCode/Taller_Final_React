@@ -1,17 +1,21 @@
+// src/pages/Registro.jsx
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "react-toastify";
-import { supabase } from "../supabaseClient"; // Importación del cliente
+// Cambia la línea 6 de tu archivo src/components/auth/Register.jsx por esta:
+import { supabase } from "../../utils/supabaseClient.js";
 
 export class Register extends Component {
   constructor(props) {
     super(props);
 
+    // 1. El rol ahora es interno y por defecto siempre será 'cliente'
     this.state = {
       Nombre: "",
       correo: "",
       contraseña: "",
+      rol: "cliente", 
       mostrarContraseña: false,
       cargando: false,
     };
@@ -35,7 +39,8 @@ export class Register extends Component {
   };
 
   limpiarFormulario = () => {
-    this.setState({ Nombre: "", correo: "", contraseña: "" });
+    // Mantenemos el rol por defecto al limpiar
+    this.setState({ Nombre: "", correo: "", contraseña: "", rol: "cliente" });
   };
 
   handleSubmit = async (e) => {
@@ -49,13 +54,14 @@ export class Register extends Component {
     this.setState({ cargando: true });
 
     try {
-      // Llamada al servicio de autenticación nativo (Encripta la contraseña automáticamente)
+      // 2. Registramos al usuario e incluimos el rol 'cliente' de forma oculta y segura
       const { data, error } = await supabase.auth.signUp({
         email: this.state.correo,
         password: this.state.contraseña,
         options: {
           data: {
-            display_name: this.state.Nombre, // Guardamos el nombre en los metadatos del JWT
+            display_name: this.state.Nombre,
+            user_role: this.state.rol, // Viaja protegido dentro del JWT
           },
         },
       });
@@ -63,7 +69,7 @@ export class Register extends Component {
       if (error) throw error;
 
       if (data.user) {
-        toast.success("¡Datos guardados de forma segura en la nube!");
+        toast.success("🎉 ¡Cuenta de cliente creada con éxito!");
         this.limpiarFormulario();
       }
     } catch (error) {
@@ -169,6 +175,7 @@ export class Register extends Component {
             <form className="space-y-4" onSubmit={this.handleSubmit}>
               {this.renderCampoNombre()}
               {this.renderCampoCorreo()}
+              {/* El campo de selección de rol ha sido removido con éxito para proteger el sistema */}
               {this.renderCampoContraseña()}
 
               <button
