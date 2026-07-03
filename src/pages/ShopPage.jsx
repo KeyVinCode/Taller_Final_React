@@ -14,6 +14,21 @@ import { CartContext } from "../context/CartContext";
 const PRODUCTOS_POR_PAGINA = 8;
 
 /**
+ * Tasa de cambio: 1 USD → COP (aproximada)
+ */
+const TASA_CAMBIO_COP = 4200;
+
+/**
+ * Convierte un precio en USD a COP y lo formatea
+ * @param {number} precioUSD - Precio en dólares
+ * @returns {string} Precio formateado en COP (ej: "$4.200")
+ */
+const formatoCOP = (precioUSD) => {
+  const cop = Math.round(precioUSD * TASA_CAMBIO_COP);
+  return "$" + cop.toLocaleString("es-CO");
+};
+
+/**
  * Placeholder genérico cuando una imagen no carga
  */
 const PLACEHOLDER_IMAGEN = "https://placehold.co/300x300/15803d/fef3c7?text=Stardew";
@@ -196,9 +211,9 @@ export class ShopPage extends Component {
                                 <p className="text-xs font-bold text-[#5c3a21] truncate">
                                   {item.producto.nombre}
                                 </p>
-                                <p className="text-xs text-[#15803d] font-bold">
-                                  ${item.producto.precio} G
-                                </p>
+                              <p className="text-xs text-[#15803d] font-bold">
+                                {formatoCOP(item.producto.precio)} COP
+                              </p>
                               </div>
                               <div className="flex items-center gap-1">
                                 <button
@@ -234,8 +249,8 @@ export class ShopPage extends Component {
                             <span className="text-xs font-bold text-[#854d0e]">
                               Total:
                             </span>
-                            <span className="text-sm font-black text-[#15803d]">
-                              ${this.context.totalPrecio} G
+                          <span className="text-sm font-black text-[#15803d]">
+                              {formatoCOP(this.context.totalPrecio)} COP
                             </span>
                           </div>
                           <Link
@@ -317,7 +332,7 @@ export class ShopPage extends Component {
                             Precio:
                           </span>
                           <span className="text-md font-black text-[#15803d]">
-                            ${producto.precio} G
+                            {formatoCOP(producto.precio)} COP
                           </span>
                         </div>
                         <button

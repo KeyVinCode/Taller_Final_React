@@ -9,8 +9,24 @@ import {
   Plus,
   Minus,
   ShoppingBag,
+  CheckCircle,
 } from "lucide-react";
 import { CartContext } from "../context/CartContext";
+import { supabase } from "../utils/supabaseClient";
+import { toast } from "react-toastify";
+
+/**
+ * Tasa de cambio: 1 USD → COP (aproximada)
+ */
+const TASA_CAMBIO_COP = 4200;
+
+/**
+ * Convierte un precio en USD a COP y lo formatea
+ */
+const formatoCOP = (precioUSD) => {
+  const cop = Math.round(precioUSD * TASA_CAMBIO_COP);
+  return "$" + cop.toLocaleString("es-CO");
+};
 
 /**
  * Placeholder genérico cuando una imagen no carga
@@ -35,6 +51,8 @@ export class CartPage extends Component {
       items: [],
       totalItems: 0,
       totalPrecio: 0,
+      realizandoPedido: false,
+      pedidoExitoso: false,
     };
   }
 
@@ -64,8 +82,67 @@ export class CartPage extends Component {
     }
   };
 
+  /**
+   * Realiza el pedido: lo guarda en Supabase y vacía el carrito.
+   */
+  realizarPedido = async () => {
+    const { items, totalPrecio } = this.state;
+
+    if (items.length === 0) {
+      toast.warn("⚠️ El carrito está vacío. Agrega productos primero.");
+      return;
+    }
+
+    this.setState({ realizandoPedido: true });
+
+    try {
+      // Obtener el usuario actual (si está logueado)
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id || null;
+
+      // Preparar los datos del pedido
+      const productosResumen = items.map((item) => ({
+        id: item.producto.id,
+        nombre: item.producto.nombre,
+        precio: item.producto.precio,
+        cantidad: item.cantidad,
+        subtotal: item.producto.precio * item.cantidad,
+        imagen: item.producto.imagen,
+      }));
+
+      // Crear el objeto del pedido
+      const pedido = {
+        usuario_id: userId,
+        productos: productosResumen,
+        total_productos: this.state.totalItems,
+        total_precio: totalPrecio,
+        total_precio_cop: Math.round(totalPrecio * TASA_CAMBIO_COP),
+        estado: "pendiente",
+        created_at: new Date().toISOString(),
+      };
+
+      // Guardar en Supabase (tabla 'orders')
+      const { error } = await supabase.from("orders").insert(pedido);
+
+      if (error) throw error;
+
+      // Vaciar el carrito
+      this.context.vaciarCarrito();
+
+      // Mostrar éxito
+      toast.success("🎉 ¡Pedido realizado con éxito!", { autoClose: 4000 });
+      this.setState({ pedidoExitoso: true });
+    } catch (error) {
+      console.error("❌ Error al realizar pedido:", error.message);
+      toast.error(`⚠️ Error al realizar el pedido: ${error.message}`);
+    } finally {
+      this.setState({ realizandoPedido: false });
+    }
+  };
+
   render() {
-    const { items, totalItems, totalPrecio } = this.state;
+    const { items, totalItems, totalPrecio, realizandoPedido, pedidoExitoso } =
+      this.state;
     const carritoVacio = items.length === 0;
 
     return (
@@ -92,7 +169,26 @@ export class CartPage extends Component {
 
         {/* Contenido principal */}
         <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-8">
-          {carritoVacio ? (
+          {pedidoExitoso ? (
+            /* Pantalla de pedido exitoso */
+            <div className="bg-[#fef3c7] p-12 rounded-2xl border-4 border-[#854d0e] shadow-[6px_6px_0px_0px_rgba(0,0,0,0.2)] text-center">
+              <CheckCircle className="w-24 h-24 text-[#15803d] mx-auto mb-4" />
+              <h2 className="text-3xl font-bold text-[#854d0e] mb-2">
+                ¡Pedido Confirmado!
+              </h2>
+              <p className="text-[#5c3a21] mb-6 text-lg">
+                Tu pedido ha sido registrado exitosamente. Pronto recibirás
+                noticias del Valle. 🌾
+              </p>
+              <Link
+                to="/shop"
+                className="inline-flex items-center gap-2 bg-[#15803d] hover:bg-[#166534] text-white font-bold py-3 px-8 rounded-xl border-2 border-[#854d0e] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.15)] active:translate-y-0.5 active:shadow-none transition-all text-lg"
+              >
+                <Store className="w-5 h-5" />
+                Seguir comprando
+              </Link>
+            </div>
+          ) : carritoVacio ? (
             /* Estado vacío */
             <div className="bg-[#fef3c7] p-12 rounded-2xl border-4 border-[#854d0e] shadow-[6px_6px_0px_0px_rgba(0,0,0,0.2)] text-center">
               <ShoppingBag className="w-20 h-20 text-[#854d0e]/40 mx-auto mb-4" />
@@ -138,7 +234,7 @@ export class CartPage extends Component {
                         {item.producto.nombre}
                       </h3>
                       <p className="text-sm font-black text-[#15803d]">
-                        ${item.producto.precio} G c/u
+                        {formatoCOP(item.producto.precio)} COP c/u
                       </p>
                     </div>
 
@@ -170,7 +266,7 @@ export class CartPage extends Component {
                     {/* Subtotal y eliminar */}
                     <div className="text-right">
                       <p className="font-black text-[#15803d] text-lg">
-                        ${item.producto.precio * item.cantidad} G
+                        {formatoCOP(item.producto.precio * item.cantidad)} COP
                       </p>
                       <button
                         onClick={() =>
@@ -194,7 +290,7 @@ export class CartPage extends Component {
                       Productos ({totalItems} uds.):
                     </span>
                     <span className="font-bold text-[#5c3a21]">
-                      ${totalPrecio} G
+                      {formatoCOP(totalPrecio)} COP
                     </span>
                   </div>
                   <div className="flex justify-between items-center mb-4">
@@ -206,7 +302,7 @@ export class CartPage extends Component {
                       Total:
                     </span>
                     <span className="text-2xl font-black text-[#15803d]">
-                      ${totalPrecio} G
+                      {formatoCOP(totalPrecio)} COP
                     </span>
                   </div>
 
@@ -217,8 +313,14 @@ export class CartPage extends Component {
                     >
                       Vaciar carrito
                     </button>
-                    <button className="flex-1 bg-[#15803d] hover:bg-[#166534] text-white font-bold py-2.5 rounded-xl border-2 border-[#854d0e] shadow-[3px_3px_0px_0px_rgba(0,0,0,0.15)] active:translate-y-0.5 active:shadow-none transition-all text-sm cursor-pointer">
-                      Pagar ahora
+                    <button
+                      onClick={this.realizarPedido}
+                      disabled={realizandoPedido}
+                      className="flex-1 bg-[#15803d] hover:bg-[#166534] text-white font-bold py-2.5 rounded-xl border-2 border-[#854d0e] shadow-[3px_3px_0px_0px_rgba(0,0,0,0.15)] active:translate-y-0.5 active:shadow-none transition-all text-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {realizandoPedido
+                        ? "Guardando..."
+                        : "Realizar pedido"}
                     </button>
                   </div>
                 </div>
