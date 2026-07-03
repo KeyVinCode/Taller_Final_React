@@ -10,6 +10,7 @@ import {
   Package,
 } from "lucide-react";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { CartContext } from "../context/CartContext";
 import { AuthContext } from "../context/AuthContext";
 
@@ -133,9 +134,41 @@ export class ShopPage extends Component {
   };
 
   manejarAgregarAlCarrito = (producto) => {
+    // Verificar si el usuario está logueado desde localStorage
+    const usuarioStorage = localStorage.getItem("stardew_usuario");
+    if (!usuarioStorage) {
+      this.mostrarToastLogin();
+      return;
+    }
+    try {
+      const usuario = JSON.parse(usuarioStorage);
+      if (!usuario || !usuario.id) {
+        this.mostrarToastLogin();
+        return;
+      }
+    } catch {
+      this.mostrarToastLogin();
+      return;
+    }
     if (this.context && this.context.agregarAlCarrito) {
       this.context.agregarAlCarrito(producto);
     }
+  };
+
+  mostrarToastLogin = () => {
+    toast.warn(
+      <div>
+        ⚠️ Debes{" "}
+        <Link
+          to="/Login"
+          className="text-[#15803d] font-bold underline"
+        >
+          iniciar sesión
+        </Link>{" "}
+        para agregar productos al carrito.
+      </div>,
+      { autoClose: 4000 }
+    );
   };
 
   toggleCarrito = () => {

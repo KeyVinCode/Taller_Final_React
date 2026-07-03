@@ -1,13 +1,16 @@
 // src/pages/LandingPage.jsx
 import React, { Component } from "react";
-// Importación de los iconos temáticos necesarios
 import { Apple, Hammer, Coins, ArrowRight } from "lucide-react";
-// Importación del componente de clase Footer
 import Footer from "../common/Footer";
 import { Link } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 
 export class LandingPage extends Component {
+  static contextType = AuthContext;
+
   render() {
+    const { usuario } = this.context || {};
+
     return (
       <div className="min-h-screen flex flex-col font-stardewFont">
         {/* HERO SECTION - Fondo de cielo degradado de Stardew Valley */}
@@ -34,15 +37,18 @@ export class LandingPage extends Component {
             {/* Botones de Acción con efecto de presión activa */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/Login"
+                to={usuario?.user_role === "admin" ? "/admin" : "/Login"}
                 className="flex items-center justify-center gap-2 bg-[#15803d] hover:bg-[#166534] text-white font-bold py-3 px-6 rounded border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] transition-all text-center cursor-pointer"
               >
-                Ingresar a la Tienda
+                {usuario ? "Ir a la Tienda" : "Ingresar a la Tienda"}
                 <ArrowRight className="w-5 h-5" />
               </Link>
-              <button className="bg-[#fde68a] hover:bg-[#eab308] text-[#854d0e] font-bold py-3 px-6 rounded border-2 border-[#854d0e] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] transition-all transform active:translate-y-1 active:shadow-none cursor-pointer">
+              <Link
+                to="/Shop"
+                className="flex items-center justify-center gap-2 bg-[#fde68a] hover:bg-[#eab308] text-[#854d0e] font-bold py-3 px-6 rounded border-2 border-[#854d0e] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] transition-all transform active:translate-y-1 active:shadow-none cursor-pointer"
+              >
                 Ver Catálogo
-              </button>
+              </Link>
             </div>
           </div>
         </header>
