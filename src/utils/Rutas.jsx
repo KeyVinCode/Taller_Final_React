@@ -8,6 +8,7 @@ import ShopPage from '../pages/ShopPage'
 import Cart from '../components/client/Cart'
 import OrdersHistory from '../components/client/OrdersHistory'
 import OrderDetail from '../components/client/OrderDetail'
+import AdminPage from '../pages/AdminPage'
 
 /**
  * Wrapper para pasar useParams() a componentes de clase (OrderDetail)
@@ -32,6 +33,7 @@ export class Rutas extends Component {
           <Route path="/cart" element={<Cart/>}/>
           <Route path="/orders" element={<OrdersHistory/>}/>
           <Route path="/orders/:id" element={<OrderDetailWithParams/>}/>
+          <Route path="/admin" element={<AdminPage/>}/>
         </Routes>
     )
   }
