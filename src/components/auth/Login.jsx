@@ -1,11 +1,14 @@
 // src/components/auth/Login.jsx
 import React, { Component } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // 1. Importamos useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { supabase } from '../../utils/supabaseClient'; // Ruta corregida según tu árbol de carpetas
+import { supabase } from '../../utils/supabaseClient';
+import { AuthContext } from '../../context/AuthContext';
 
 export class Login extends Component {
+  static contextType = AuthContext;
+
   constructor(props) {
     super(props);
     
@@ -29,34 +32,9 @@ export class Login extends Component {
     }));
   };
 
-  /**
-   * Obtiene el rol del usuario desde la tabla pública 'profiles'.
-   * Si no encuentra el perfil, asume 'cliente' por defecto.
-   */
-  obtenerRolUsuario = async (userId) => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_role")
-        .eq("id", userId)
-        .single();
-
-      if (error) {
-        console.warn("⚠️ No se pudo obtener el rol, se usará 'cliente':", error.message);
-        return "cliente";
-      }
-
-      return data?.user_role || "cliente";
-    } catch (err) {
-      console.warn("⚠️ Error al consultar el rol:", err.message);
-      return "cliente";
-    }
-  };
-
   handleSubmit = async (e) => {
     e.preventDefault();
     
-    // CORRECCIÓN TÉCNICA: Limpiamos espacios y forzamos el correo a minúsculas
     const correo = this.state.correo.trim().toLowerCase();
     const contraseña = this.state.contraseña.trim();
 
@@ -68,26 +46,21 @@ export class Login extends Component {
     this.setState({ cargando: true });
 
     try {
-      // Petición de autenticación con los datos formateados
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: correo,
-        password: contraseña,
-      });
+      // Usamos AuthContext para iniciar sesión y guardar el usuario
+      const resultado = await this.context.iniciarSesion(correo, contraseña);
 
-      if (error) throw error;
+      if (resultado.success) {
+        const usuario = resultado.usuario;
 
-      if (data.session) {
-        // Consultamos el rol del usuario en la tabla profiles
-        const rol = await this.obtenerRolUsuario(data.user.id);
+        toast.success(`👨‍🌾 ¡Bienvenido, ${usuario.display_name}!`);
 
-        // Redirigimos según el rol
-        if (rol === "admin") {
-          toast.success("👨‍🌾 ¡Bienvenido administrador!");
+        if (usuario.user_role === "admin") {
           this.props.navigate('/admin');
         } else {
-          toast.success("👨‍🌾 ¡Bienvenido de vuelta a la granja!");
           this.props.navigate('/shop');
         }
+      } else {
+        throw new Error(resultado.error);
       }
     } catch (error) {
       console.error("--- DETALLES COMPLETOS DEL ERROR DE AUTENTICACIÓN ---");
@@ -165,7 +138,7 @@ export class Login extends Component {
 
             <p className="text-center text-sm text-[#5c3a21] font-semibold mt-6">
               ¿Eres nuevo en el valle?{' '}
-              <Link to="/registro" className="text-[#15803d] hover:underline font-bold">
+              <Link to="/Registro" className="text-[#15803d] hover:underline font-bold">
                 Regístrate aquí
               </Link>
             </p>

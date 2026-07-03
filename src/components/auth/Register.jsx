@@ -241,7 +241,7 @@ export class Register extends Component {
             <p className="text-center text-sm text-[#5c3a21] font-semibold mt-6">
               ¿Ya tienes cuenta?{" "}
               <Link
-                to="/login"
+                to="/Login"
                 className="text-[#15803d] hover:underline font-bold"
               >
                 Inicia sesión

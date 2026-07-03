@@ -7,9 +7,11 @@ import {
   ArrowLeft,
   ChevronDown,
   X,
+  Package,
 } from "lucide-react";
 import axios from "axios";
 import { CartContext } from "../context/CartContext";
+import { AuthContext } from "../context/AuthContext";
 
 const PRODUCTOS_POR_PAGINA = 8;
 
@@ -56,6 +58,28 @@ export class ShopPage extends Component {
       carritoAbierto: false,
     };
   }
+
+  /** Renderiza el nombre del usuario desde AuthContext */
+  renderNombreUsuario = () => (
+    <AuthContext.Consumer>
+      {({ usuario, cerrarSesion }) =>
+        usuario ? (
+          <div className="flex items-center gap-2 bg-[#15803d]/10 px-3 py-1.5 rounded-xl border border-[#15803d]/30">
+            <span className="text-xs font-bold text-[#15803d]">
+              👨‍🌾 {usuario.display_name}
+            </span>
+            <button
+              onClick={cerrarSesion}
+              className="text-xs text-red-600 hover:text-red-800 font-bold ml-1 cursor-pointer"
+              title="Cerrar sesión"
+            >
+              ✕
+            </button>
+          </div>
+        ) : null
+      }
+    </AuthContext.Consumer>
+  );
 
   componentDidMount() {
     this.cargarProductosDesdeAPI();
@@ -138,7 +162,18 @@ export class ShopPage extends Component {
             </h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {this.renderNombreUsuario()}
+
+            <Link
+              to="/orders"
+              className="flex items-center gap-2 bg-white hover:bg-gray-100 text-[#854d0e] font-bold py-2 px-3 rounded-xl border-2 border-[#854d0e] text-xs transition-all"
+              title="Mis pedidos"
+            >
+              <Package className="w-4 h-4" />
+              <span className="hidden md:inline">Pedidos</span>
+            </Link>
+
             <Link
               to="/"
               className="flex items-center gap-2 bg-white hover:bg-gray-100 text-[#854d0e] font-bold py-2 px-4 rounded-xl border-2 border-[#854d0e] text-sm transition-all"

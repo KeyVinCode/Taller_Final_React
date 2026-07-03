@@ -23,3 +23,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Scripts de utilidad
+download-images.cjs
+download-images.js
+
+# Imágenes generadas localmente
+public/images/
