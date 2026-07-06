@@ -11,6 +11,10 @@ import OrderDetail from '../components/client/OrderDetail'
 import AdminPage from '../pages/AdminPage'
 import AdminGuard from '../components/admin/AdminGuard'
 import ClientList from '../components/admin/ClientList'
+import OrderList from '../components/admin/OrderList'
+import AdminOrderDetail from '../components/admin/AdminOrderDetail'
+import DiagnosticoPage from '../pages/DiagnosticoPage'
+import AuthGuard from '../components/common/AuthGuard'
 
 /**
  * Wrapper para pasar useParams() a componentes de clase (OrderDetail)
@@ -23,6 +27,7 @@ function withParams(Component) {
 }
 
 const OrderDetailWithParams = withParams(OrderDetail);
+const AdminOrderDetailWithParams = withParams(AdminOrderDetail);
 
 export class Rutas extends Component {
   render() {
@@ -32,11 +37,14 @@ export class Rutas extends Component {
           <Route path="/Login" element={<Login/>}/>
           <Route path="/Registro" element={<Register/>}/>
           <Route path="/Shop" element={<ShopPage/>}/>
-          <Route path="/cart" element={<Cart/>}/>
-          <Route path="/orders" element={<OrdersHistory/>}/>
-          <Route path="/orders/:id" element={<OrderDetailWithParams/>}/>
+          <Route path="/cart" element={<AuthGuard><Cart/></AuthGuard>}/>
+          <Route path="/orders" element={<AuthGuard><OrdersHistory/></AuthGuard>}/>
+          <Route path="/orders/:id" element={<AuthGuard><OrderDetailWithParams/></AuthGuard>}/>
           <Route path="/admin" element={<AdminGuard><AdminPage/></AdminGuard>}/>
           <Route path="/admin/clientes" element={<AdminGuard><ClientList/></AdminGuard>}/>
+          <Route path="/admin/pedidos" element={<AdminGuard><OrderList/></AdminGuard>}/>
+          <Route path="/admin/pedidos/:id" element={<AdminGuard><AdminOrderDetailWithParams/></AdminGuard>}/>
+          <Route path="/diagnostico" element={<DiagnosticoPage/>}/>
         </Routes>
     )
   }

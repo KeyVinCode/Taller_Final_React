@@ -33,6 +33,9 @@ export class ClientList extends Component {
     this.setState({ cargando: true, error: null });
 
     try {
+      // Refrescar sesión de Supabase para que las políticas RLS funcionen
+      await supabase.auth.getSession();
+
       const { data, error } = await supabase
         .from("profiles")
         .select("*")

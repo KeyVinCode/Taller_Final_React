@@ -8,6 +8,7 @@ import {
   Package,
   Users,
   LogOut,
+  User,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 
@@ -82,16 +83,18 @@ export class AdminNavbar extends Component {
             </div>
 
             {/* Usuario y cerrar sesión (escritorio) */}
-            <div className="hidden md:flex items-center gap-3">
-              <span className="text-xs text-[#fef3c7]/70">
-                👨‍🌾 {usuario.display_name}
+            <div className="hidden md:flex items-center gap-1">
+              <span className="flex items-center gap-1.5 text-[#fef3c7] hover:bg-[#5c3a21] px-3 py-1.5 rounded-lg text-sm font-bold transition-colors">
+                <User className="w-4 h-4" />
+                {usuario.display_name}
               </span>
               <button
                 onClick={() => this.context.cerrarSesion()}
-                className="flex items-center gap-1 text-[#fef3c7] hover:text-red-300 text-sm font-bold transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 text-[#fef3c7] hover:bg-red-700/50 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors cursor-pointer"
                 title="Cerrar sesión"
               >
                 <LogOut className="w-4 h-4" />
+                Salir
               </button>
             </div>
 
@@ -169,8 +172,9 @@ export class AdminNavbar extends Component {
                 <LogOut className="w-4 h-4" />
                 Cerrar sesión
               </button>
-              <p className="text-xs text-[#fef3c7]/50 px-3 pt-2">
-                👨‍🌾 {usuario.display_name}
+              <p className="flex items-center gap-1.5 text-sm text-[#fef3c7]/70 px-3 pt-2 font-bold">
+                <User className="w-4 h-4" />
+                {usuario.display_name}
               </p>
             </div>
           )}

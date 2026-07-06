@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../utils/supabaseClient";
 import { AuthContext } from "../context/AuthContext";
-import { AdminNavbar } from "../components/admin/AdminNavbar";
+// AdminNavbar ahora es incluido automáticamente por AdminGuard
 import axios from "axios";
 
 const TASA_CAMBIO_COP = 4200;
@@ -50,6 +50,7 @@ export class AdminPage extends Component {
       pedidosPorEstado: { pendiente: 0, aprobado: 0, rechazado: 0, enviado: 0, entregado: 0 },
       ingresosTotales: 0,
       ultimosPedidos: [],
+      perfilesMap: {},
       cargando: true,
       error: null,
     };
@@ -63,6 +64,15 @@ export class AdminPage extends Component {
     this.setState({ cargando: true, error: null });
 
     try {
+      // Restaurar la sesión de Supabase para que RLS funcione
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+        });
+      }
+
       // 1. Total de clientes (TODOS, no solo los últimos)
       const { count: totalClientes, error: errClientes } = await supabase
         .from("profiles").select("*", { count: "exact", head: true });
@@ -93,6 +103,21 @@ export class AdminPage extends Component {
         ingresosTotales += p.total_precio || 0;
       });
 
+      // Obtener los nombres de los perfiles de los usuarios (filtrando null/undefined)
+      const idsUsuarios = [...new Set((pedidos || []).map((p) => p.usuario_id).filter(Boolean))];
+      let perfilesMap = {};
+      if (idsUsuarios.length > 0) {
+        const { data: perfilesData } = await supabase
+          .from("profiles")
+          .select("id, display_name")
+          .in("id", idsUsuarios);
+        if (perfilesData) {
+          perfilesData.forEach((p) => {
+            perfilesMap[p.id] = p.display_name;
+          });
+        }
+      }
+
       this.setState({
         totalClientes: totalClientes || 0,
         totalPedidos: totalPedidosReal || 0,
@@ -100,6 +125,7 @@ export class AdminPage extends Component {
         pedidosPorEstado,
         ingresosTotales,
         ultimosPedidos: pedidos || [],
+        perfilesMap,
         cargando: false,
       });
     } catch (error) {
@@ -115,12 +141,11 @@ export class AdminPage extends Component {
   };
 
   render() {
-    const { totalClientes, totalPedidos, totalProductos, pedidosPorEstado, ingresosTotales, ultimosPedidos, cargando, error } = this.state;
+    const { totalClientes, totalPedidos, totalProductos, pedidosPorEstado, ingresosTotales, ultimosPedidos, perfilesMap, cargando, error } = this.state;
     const usuario = this.context?.usuario;
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#60a5fa] via-[#93c5fd] to-[#bfdbfe] flex flex-col font-stardewFont">
-        <AdminNavbar />
 
         <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
           {cargando ? (
@@ -223,7 +248,7 @@ export class AdminPage extends Component {
                             <tr key={pedido.id} className="hover:bg-[#fef3c7]/50">
                               <td className="p-3 font-bold text-[#5c3a21]">#{pedido.id?.slice(0, 8)}</td>
                               <td className="p-3 text-gray-500">{this.formatearFecha(pedido.created_at)}</td>
-                              <td className="p-3 text-gray-500">{pedido.usuario_id?.slice(0, 8) || "Anónimo"}</td>
+                              <td className="p-3 text-gray-500">{perfilesMap[pedido.usuario_id] || pedido.usuario_id?.slice(0, 8) || "Anónimo"}</td>
                               <td className="p-3 font-black text-[#15803d]">{formatoCOP(pedido.total_precio)}</td>
                               <td className="p-3">
                                 <div className="flex items-center gap-1.5">

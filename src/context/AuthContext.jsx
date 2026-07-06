@@ -1,6 +1,7 @@
 // src/context/AuthContext.jsx
 import React, { Component, createContext } from "react";
 import { supabase } from "../utils/supabaseClient";
+import { restaurarSesion } from "../utils/sessionHelper";
 
 export const AuthContext = createContext();
 
@@ -42,9 +43,64 @@ export class AuthProvider extends Component {
 
     this.state = {
       usuario: usuarioGuardado, // { id, email, display_name, user_role }
-      cargando: false,
+      cargando: usuarioGuardado !== null, // Si hay usuario en storage, empezar verificando
     };
   }
+
+  componentDidMount() {
+    this.verificarSesion();
+
+    // Escuchar cambios de autenticación en tiempo real
+    this._authListener = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        guardarUsuarioStorage(null);
+        this.setState({ usuario: null, cargando: false });
+      } else if (event === 'SIGNED_IN' && session) {
+        // Si es SIGNED_IN pero no tenemos usuario en state, recargar datos
+        if (!this.state.usuario) {
+          this.recargarUsuario(session);
+        }
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        // Token refrescado, verificar si necesitamos actualizar datos
+        if (this.state.usuario) {
+          this.setState({ cargando: false });
+        }
+      }
+    });
+  }
+
+  componentWillUnmount() {
+    // Limpiar listener al desmontar
+    if (this._authListener?.data?.subscription) {
+      this._authListener.data.subscription.unsubscribe();
+    }
+  }
+
+  /**
+   * Recarga los datos del usuario desde la sesión
+   */
+  recargarUsuario = async (session) => {
+    try {
+      const { data: perfil } = await supabase
+        .from("profiles")
+        .select("display_name, user_role")
+        .eq("id", session.user.id)
+        .single();
+
+      const usuario = {
+        id: session.user.id,
+        email: session.user.email,
+        display_name: perfil?.display_name || "Granjero",
+        user_role: perfil?.user_role || "cliente",
+      };
+
+      guardarUsuarioStorage(usuario);
+      this.setState({ usuario, cargando: false });
+    } catch (e) {
+      console.warn("Error al recargar usuario:", e);
+      this.setState({ cargando: false });
+    }
+  };
 
   /**
    * Inicia sesión y guarda los datos del usuario (incluyendo nombre y rol)
@@ -106,26 +162,38 @@ export class AuthProvider extends Component {
    */
   verificarSesion = async () => {
     try {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        const { data: perfil } = await supabase
-          .from("profiles")
-          .select("display_name, user_role")
-          .eq("id", data.session.user.id)
-          .single();
+      // Usar el helper para restaurar la sesión (busca en múltiples lugares)
+      const sesionRestaurada = await restaurarSesion(supabase);
 
-        const usuario = {
-          id: data.session.user.id,
-          email: data.session.user.email,
-          display_name: perfil?.display_name || "Granjero",
-          user_role: perfil?.user_role || "cliente",
-        };
+      if (sesionRestaurada) {
+        // Obtener los datos del usuario desde la sesión recién restaurada
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data: perfil } = await supabase
+            .from("profiles")
+            .select("display_name, user_role")
+            .eq("id", session.user.id)
+            .single();
 
-        guardarUsuarioStorage(usuario);
-        this.setState({ usuario });
+          const usuario = {
+            id: session.user.id,
+            email: session.user.email,
+            display_name: perfil?.display_name || "Granjero",
+            user_role: perfil?.user_role || "cliente",
+          };
+
+          guardarUsuarioStorage(usuario);
+          this.setState({ usuario, cargando: false });
+          return;
+        }
       }
+
+      // No hay sesión activa, limpiar estado
+      guardarUsuarioStorage(null);
+      this.setState({ usuario: null, cargando: false });
     } catch (e) {
       console.warn("Error al verificar sesión:", e);
+      this.setState({ cargando: false });
     }
   };
 

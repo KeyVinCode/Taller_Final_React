@@ -8,6 +8,9 @@ import {
   ChevronDown,
   X,
   Package,
+  LayoutDashboard,
+  LogIn,
+  UserPlus,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -63,19 +66,12 @@ export class ShopPage extends Component {
   /** Renderiza el nombre del usuario desde AuthContext */
   renderNombreUsuario = () => (
     <AuthContext.Consumer>
-      {({ usuario, cerrarSesion }) =>
+      {({ usuario }) =>
         usuario ? (
-          <div className="flex items-center gap-2 bg-[#15803d]/10 px-3 py-1.5 rounded-xl border border-[#15803d]/30">
-            <span className="text-xs font-bold text-[#15803d]">
-              👨‍🌾 {usuario.display_name}
+          <div className="flex items-center bg-gradient-to-r from-[#15803d] to-[#166534] px-3 py-1.5 rounded-xl border-2 border-[#854d0e] shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)]">
+            <span className="text-sm font-black text-white tracking-wide drop-shadow-[1px_1px_0px_rgba(0,0,0,0.3)]">
+              {usuario.display_name}
             </span>
-            <button
-              onClick={cerrarSesion}
-              className="text-xs text-red-600 hover:text-red-800 font-bold ml-1 cursor-pointer"
-              title="Cerrar sesión"
-            >
-              ✕
-            </button>
           </div>
         ) : null
       }
@@ -198,22 +194,70 @@ export class ShopPage extends Component {
           <div className="flex items-center gap-3">
             {this.renderNombreUsuario()}
 
-            <Link
-              to="/orders"
-              className="flex items-center gap-2 bg-white hover:bg-gray-100 text-[#854d0e] font-bold py-2 px-3 rounded-xl border-2 border-[#854d0e] text-xs transition-all"
-              title="Mis pedidos"
-            >
-              <Package className="w-4 h-4" />
-              <span className="hidden md:inline">Pedidos</span>
-            </Link>
+            {/* Botón Pedidos - solo visible si hay sesión activa */}
+            <AuthContext.Consumer>
+              {({ usuario }) =>
+                usuario ? (
+                  <Link
+                    to="/orders"
+                    className="flex items-center gap-2 bg-white hover:bg-gray-100 text-[#854d0e] font-bold py-2 px-3 rounded-xl border-2 border-[#854d0e] text-xs transition-all"
+                    title="Mis pedidos"
+                  >
+                    <Package className="w-4 h-4" />
+                    <span className="hidden md:inline">Pedidos</span>
+                  </Link>
+                ) : null
+              }
+            </AuthContext.Consumer>
 
-            <Link
-              to="/"
-              className="flex items-center gap-2 bg-white hover:bg-gray-100 text-[#854d0e] font-bold py-2 px-4 rounded-xl border-2 border-[#854d0e] text-sm transition-all"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Volver
-            </Link>
+            {/* Botón Admin Dashboard - solo visible para admins */}
+            <AuthContext.Consumer>
+              {({ usuario }) =>
+                usuario?.user_role === "admin" ? (
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-2 bg-[#854d0e] hover:bg-[#5c3a21] text-[#fef3c7] font-bold py-2 px-3 rounded-xl border-2 border-[#5c3a21] text-xs transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)]"
+                    title="Panel de administración"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    <span className="hidden md:inline">Admin</span>
+                  </Link>
+                ) : null
+              }
+            </AuthContext.Consumer>
+
+            {/* Botón de autenticación - cambia según sesión */}
+            <AuthContext.Consumer>
+              {({ usuario, cerrarSesion }) =>
+                usuario ? (
+                  <button
+                    onClick={cerrarSesion}
+                    className="flex items-center gap-2 bg-white hover:bg-red-50 text-[#854d0e] hover:text-red-600 font-bold py-2 px-4 rounded-xl border-2 border-[#854d0e] hover:border-red-400 text-sm transition-all cursor-pointer"
+                    title="Cerrar sesión"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Cerrar Sesión
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to="/Login"
+                      className="flex items-center gap-1.5 bg-[#15803d] hover:bg-[#166534] text-white font-bold py-2 px-3 rounded-xl border-2 border-[#854d0e] text-xs transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] active:translate-y-0.5 active:shadow-none"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span className="hidden md:inline">Iniciar Sesión</span>
+                    </Link>
+                    <Link
+                      to="/"
+                      className="flex items-center gap-2 bg-white hover:bg-gray-100 text-[#854d0e] font-bold py-2 px-4 rounded-xl border-2 border-[#854d0e] text-sm transition-all"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      Volver
+                    </Link>
+                  </div>
+                )
+              }
+            </AuthContext.Consumer>
 
             <div className="relative">
               <button

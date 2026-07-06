@@ -1,69 +1,41 @@
-// src/components/admin/AdminGuard.jsx — Protege rutas para que solo admins accedan
+// src/components/common/AuthGuard.jsx — Protege rutas que requieren sesión activa
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import { ShieldOff, Store } from "lucide-react";
-import { supabase } from "../../utils/supabaseClient";
+import { LogIn, Store } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
-import { AdminNavbar } from "./AdminNavbar";
 
 /**
- * AdminGuard: Solo renderiza el contenido si el usuario tiene rol "admin".
- * Si no está logueado o no es admin, muestra un mensaje de acceso denegado.
- * Incluye automáticamente el AdminNavbar en todas las vistas protegidas.
+ * AuthGuard: Solo renderiza el contenido si el usuario está logueado.
+ * Si no está logueado, muestra un mensaje para iniciar sesión.
  */
-export class AdminGuard extends Component {
+export class AuthGuard extends Component {
   static contextType = AuthContext;
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      sesionLista: false,
-    };
-  }
-
-  async componentDidMount() {
-    // Forzar restauración de sesión antes de renderizar contenido
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        await supabase.auth.setSession({
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-        });
-      }
-    } catch (e) {
-      console.warn("Error restaurando sesión en AdminGuard:", e);
-    }
-    this.setState({ sesionLista: true });
-  }
 
   render() {
     const { usuario, cargando } = this.context || {};
-    const { sesionLista } = this.state;
 
-    // Mientras se verifica la sesión o no está lista
-    if (cargando || !sesionLista) {
+    // Mientras se verifica la sesión
+    if (cargando) {
       return (
         <div className="min-h-screen bg-gradient-to-b from-[#60a5fa] via-[#93c5fd] to-[#bfdbfe] flex items-center justify-center font-stardewFont">
           <p className="text-xl font-bold text-[#854d0e] animate-pulse">
-            Verificando acceso...
+            Verificando sesión...
           </p>
         </div>
       );
     }
 
-    // No está logueado o no es admin
-    if (!usuario || usuario.user_role !== "admin") {
+    // No está logueado
+    if (!usuario) {
       return (
         <div className="min-h-screen bg-gradient-to-b from-[#60a5fa] via-[#93c5fd] to-[#bfdbfe] flex items-center justify-center font-stardewFont">
           <div className="bg-[#fef3c7] p-10 rounded-2xl border-4 border-[#854d0e] shadow-[6px_6px_0px_0px_rgba(0,0,0,0.2)] text-center max-w-md mx-4">
-            <ShieldOff className="w-20 h-20 text-red-600 mx-auto mb-4" />
+            <LogIn className="w-20 h-20 text-[#eab308] mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-[#854d0e] mb-2">
-              Acceso Denegado
+              Inicia Sesión
             </h2>
             <p className="text-[#5c3a21] mb-6">
-              Esta sección es solo para administradores del Valle. Si eres
-              administrador, inicia sesión con tu cuenta.
+              Necesitas iniciar sesión para acceder a esta sección del Valle.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
@@ -85,14 +57,9 @@ export class AdminGuard extends Component {
       );
     }
 
-    // Es admin → renderiza el AdminNavbar + contenido de la página
-    return (
-      <>
-        <AdminNavbar />
-        {this.props.children}
-      </>
-    );
+    // Está logueado → renderiza el contenido
+    return <>{this.props.children}</>;
   }
 }
 
-export default AdminGuard;
+export default AuthGuard;
