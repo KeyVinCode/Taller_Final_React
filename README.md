@@ -55,37 +55,31 @@ Bienvenido al repositorio de **Stardew Valley Shop**, una tienda en línea temá
 Taller_Final/
 ├── public/
 │   ├── favicon.svg          # Icono de la pestaña
-│   ├── icons.svg            # Iconos SVG adicionales
-│   └── images/              # Imágenes locales (SVG generados)
+│   └── icons.svg            # Iconos SVG adicionales
 ├── src/
-│   ├── Api/
-│   │   └── apiClient.js      # Configuración del cliente Axios
-│   ├── assets/               # Recursos estáticos (imágenes, fuentes)
+│   ├── assets/               # Recursos estáticos
 │   ├── components/
 │   │   ├── Landing/          # LandingPage.jsx (bienvenida)
 │   │   ├── auth/             # Login.jsx y Register.jsx
-│   │   ├── admin/            # AdminNavbar, AdminGuard, ClientList
+│   │   ├── admin/            # AdminNavbar, AdminGuard, ClientList, OrderList, Paginacion
 │   │   ├── client/           # Cart, OrdersHistory, OrderDetail
-│   │   └── common/           # Navbar, Footer
+│   │   └── common/           # AuthGuard, Navbar, Footer
 │   ├── context/
 │   │   ├── AuthContext.jsx    # Contexto de autenticación + roles
-│   │   ├── CartContext.jsx    # Contexto del carrito de compras
-│   │   └── OrderContext.jsx   # Contexto de pedidos
-│   ├── hooks/
-│   │   └── useAuth.js        # Hook personalizado de autenticación
+│   │   └── CartContext.jsx    # Contexto del carrito de compras
 │   ├── pages/
 │   │   ├── LandingPage.jsx   # Página de inicio (bienvenida)
 │   │   ├── ShopPage.jsx      # Tienda con catálogo de productos
 │   │   ├── CartPage.jsx      # Carrito de compras completo
 │   │   ├── AdminPage.jsx     # Dashboard de administración
-│   │   ├── HomePage.jsx      # Página principal post-login
-│   │   ├── OrdersPage.jsx    # Historial de pedidos
-│   │   └── NotFoundPage.jsx  # Página 404
+│   │   ├── DiagnosticoPage.jsx # Diagnóstico de Supabase
+│   │   └── NotFoundPage.jsx  # Página de error con códigos HTTP
 │   ├── styles/
 │   │   ├── index.css         # Estilos globales + tema Tailwind
 │   │   └── App.css           # Estilos adicionales de la app
 │   ├── utils/
 │   │   ├── helpers.js        # Funciones auxiliares
+│   │   ├── sessionHelper.js  # Restauración de sesión Supabase
 │   │   ├── Rutas.jsx         # Definición de todas las rutas
 │   │   └── supabaseClient.js # Configuración de Supabase
 │   ├── App.jsx               # Componente raíz con ToastContainer
