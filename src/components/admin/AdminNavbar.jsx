@@ -35,16 +35,19 @@ export class AdminNavbar extends Component {
 
     return (
       <nav className="bg-[#854d0e] border-b-4 border-[#5c3a21] shadow-md sticky top-0 z-50 font-stardewFont">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex items-center justify-between h-14">
+        <div className="max-w-6xl mx-auto px-2 md:px-4">
+          <div className="flex items-center justify-between h-12 md:h-14">
             {/* Logo y título */}
             <Link
               to="/admin"
-              className="flex items-center gap-2 text-[#fef3c7] font-bold hover:text-[#fde68a] transition-colors"
+              className="flex items-center gap-1.5 md:gap-2 text-[#fef3c7] font-bold hover:text-[#fde68a] transition-colors"
             >
-              <LayoutDashboard className="w-6 h-6" />
-              <span className="text-lg tracking-wide hidden md:inline">
-                Admin Valle
+              <LayoutDashboard className="w-5 h-5 md:w-6 md:h-6" />
+              <span className="text-base md:text-lg tracking-wide">
+                Admin
+              </span>
+              <span className="text-base md:text-lg tracking-wide hidden sm:inline">
+                Valle
               </span>
             </Link>
 

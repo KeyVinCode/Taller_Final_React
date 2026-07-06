@@ -448,14 +448,14 @@ export class OrderList extends Component {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-[#fde68a]/50">
-                      <th className="text-left p-3 font-bold text-[#854d0e]">ID</th>
-                      <th className="text-left p-3 font-bold text-[#854d0e]">Fecha</th>
-                      <th className="text-left p-3 font-bold text-[#854d0e]">Cliente</th>
-                      <th className="text-left p-3 font-bold text-[#854d0e]">Productos</th>
-                      <th className="text-left p-3 font-bold text-[#854d0e]">Total</th>
-                      <th className="text-left p-3 font-bold text-[#854d0e]">Estado</th>
-                      <th className="text-left p-3 font-bold text-[#854d0e]">Ver</th>
-                      <th className="text-left p-3 font-bold text-[#854d0e]">Editar</th>
+                      <th className="text-left p-2 md:p-3 font-bold text-[#854d0e] text-xs md:text-sm">ID</th>
+                      <th className="text-left p-2 md:p-3 font-bold text-[#854d0e] hidden sm:table-cell text-xs md:text-sm">Fecha</th>
+                      <th className="text-left p-2 md:p-3 font-bold text-[#854d0e] text-xs md:text-sm">Cliente</th>
+                      <th className="text-left p-2 md:p-3 font-bold text-[#854d0e] hidden md:table-cell text-xs md:text-sm">Productos</th>
+                      <th className="text-left p-2 md:p-3 font-bold text-[#854d0e] text-xs md:text-sm">Total</th>
+                      <th className="text-left p-2 md:p-3 font-bold text-[#854d0e] text-xs md:text-sm">Estado</th>
+                      <th className="text-left p-2 md:p-3 font-bold text-[#854d0e] text-xs md:text-sm">Ver</th>
+                      <th className="text-left p-2 md:p-3 font-bold text-[#854d0e] hidden sm:table-cell text-xs md:text-sm">Editar</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#854d0e]/10">
@@ -477,78 +477,41 @@ export class OrderList extends Component {
                           key={pedido.id}
                           className="hover:bg-[#fef3c7]/70 transition-colors"
                         >
-                          <td className="p-3 font-bold text-[#5c3a21] font-mono text-xs">
-                            #{pedido.id?.slice(0, 8)}
+                          <td className="p-2 md:p-3 font-bold text-[#5c3a21] font-mono text-xs">#{pedido.id?.slice(0, 4)}</td>
+                          <td className="p-2 md:p-3 text-gray-500 text-xs hidden sm:table-cell">{this.formatearFecha(pedido.created_at)}</td>
+                          <td className="p-2 md:p-3">
+                            <p className="font-bold text-[#5c3a21] text-xs truncate max-w-[80px] md:max-w-[120px]">{perfil?.display_name || "Usuario"}</p>
                           </td>
-                          <td className="p-3 text-gray-500 text-xs">
-                            {this.formatearFecha(pedido.created_at)}
-                          </td>
-                          <td className="p-3">
-                            <p className="font-bold text-[#5c3a21] text-xs">
-                              {perfil?.display_name || "Usuario"}
-                            </p>
-                          </td>
-                          <td className="p-3">
+                          <td className="p-2 md:p-3 hidden md:table-cell">
                             <div className="flex items-center gap-1">
                               {productos.slice(0, 2).map((prod, idx) => (
-                                <div
-                                  key={idx}
-                                  className="w-8 h-8 bg-[#15803d] rounded-lg border border-[#854d0e] overflow-hidden flex-shrink-0"
-                                >
-                                  {prod.imagen ? (
-                                    <img
-                                      src={prod.imagen}
-                                      alt={prod.nombre}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-[#fef3c7] text-xs font-bold">
-                                      {prod.nombre?.[0] || "?"}
-                                    </div>
+                                <div key={idx} className="w-6 h-6 md:w-8 md:h-8 bg-[#15803d] rounded-lg border border-[#854d0e] overflow-hidden flex-shrink-0">
+                                  {prod.imagen ? <img src={prod.imagen} alt={prod.nombre} className="w-full h-full object-cover" /> : (
+                                    <div className="w-full h-full flex items-center justify-center text-[#fef3c7] text-xs font-bold">{prod.nombre?.[0] || "?"}</div>
                                   )}
                                 </div>
                               ))}
-                              {productos.length > 2 && (
-                                <span className="text-xs font-bold text-[#854d0e]">
-                                  +{productos.length - 2}
-                                </span>
-                              )}
-                              <span className="text-xs text-gray-500 ml-1">
-                                ({totalProductos} uds)
-                              </span>
+                              {productos.length > 2 && <span className="text-xs font-bold text-[#854d0e]">+{productos.length - 2}</span>}
+                              <span className="text-xs text-gray-500 ml-1">({totalProductos} uds)</span>
                             </div>
                           </td>
-                          <td className="p-3 font-black text-[#15803d] text-sm">
-                            {formatoCOP(pedido.total_precio)}
-                          </td>
-                          <td className="p-3">
-                            <div
-                              className={`flex items-center gap-1 px-2 py-1 rounded-full border ${estado.bg} border-[#854d0e]/30`}
-                            >
-                              <EstadoIcono className={`w-3.5 h-3.5 ${estado.color}`} />
-                              <span className={`text-xs font-bold ${estado.color}`}>
-                                {estado.texto}
-                              </span>
+                          <td className="p-2 md:p-3 font-black text-[#15803d] text-xs md:text-sm">{formatoCOP(pedido.total_precio)}</td>
+                          <td className="p-2 md:p-3">
+                            <div className={`flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full border ${estado.bg} border-[#854d0e]/30`}>
+                              <EstadoIcono className={`w-3 h-3 md:w-3.5 md:h-3.5 ${estado.color}`} />
+                              <span className={`text-xs font-bold ${estado.color} hidden md:inline`}>{estado.texto}</span>
                             </div>
                           </td>
-                          <td className="p-3">
-                            <Link
-                              to={`/admin/pedidos/${pedido.id}`}
-                              className="flex items-center gap-1 bg-[#15803d] hover:bg-[#166534] text-white font-bold py-1.5 px-2.5 rounded-lg border-2 border-[#5c3a21] text-xs transition-all active:translate-y-0.5 active:shadow-none"
-                              title="Ver detalle del pedido"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              Ver
+                          <td className="p-2 md:p-3">
+                            <Link to={`/admin/pedidos/${pedido.id}`} className="flex items-center gap-1 bg-[#15803d] hover:bg-[#166534] text-white font-bold py-1 md:py-1.5 px-1.5 md:px-2.5 rounded-lg border-2 border-[#5c3a21] text-xs transition-all active:translate-y-0.5 active:shadow-none" title="Ver detalle">
+                              <Eye className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                              <span className="hidden md:inline">Ver</span>
                             </Link>
                           </td>
-                          <td className="p-3">
-                            <button
-                              onClick={() => this.abrirModal(pedido)}
-                              className="flex items-center gap-1 bg-[#854d0e] hover:bg-[#5c3a21] text-[#fef3c7] font-bold py-1.5 px-2.5 rounded-lg border-2 border-[#5c3a21] text-xs transition-all active:translate-y-0.5 active:shadow-none cursor-pointer"
-                              title="Editar estado del pedido"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                              Editar
+                          <td className="p-2 md:p-3 hidden sm:table-cell">
+                            <button onClick={() => this.abrirModal(pedido)} className="flex items-center gap-1 bg-[#854d0e] hover:bg-[#5c3a21] text-[#fef3c7] font-bold py-1 md:py-1.5 px-1.5 md:px-2.5 rounded-lg border-2 border-[#5c3a21] text-xs transition-all active:translate-y-0.5 active:shadow-none cursor-pointer" title="Editar estado">
+                              <Edit3 className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                              <span className="hidden md:inline">Editar</span>
                             </button>
                           </td>
                         </tr>

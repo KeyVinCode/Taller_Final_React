@@ -215,22 +215,22 @@ export class ClientList extends Component {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-[#fde68a]/50">
-                      <th className="text-left p-4 font-bold text-[#854d0e]">
+                      <th className="text-left p-2 md:p-4 font-bold text-[#854d0e] text-xs md:text-sm">
                         Usuario
                       </th>
-                      <th className="text-left p-4 font-bold text-[#854d0e]">
+                      <th className="text-left p-2 md:p-4 font-bold text-[#854d0e] hidden sm:table-cell text-xs md:text-sm">
                         Correo
                       </th>
-                      <th className="text-left p-4 font-bold text-[#854d0e]">
+                      <th className="text-left p-2 md:p-4 font-bold text-[#854d0e] text-xs md:text-sm">
                         Rol
                       </th>
-                      <th className="text-left p-4 font-bold text-[#854d0e] hidden md:table-cell">
-                        Fecha de registro
+                      <th className="text-left p-2 md:p-4 font-bold text-[#854d0e] hidden lg:table-cell text-xs md:text-sm">
+                        Fecha
                       </th>
-                      <th className="text-left p-4 font-bold text-[#854d0e] hidden md:table-cell">
+                      <th className="text-left p-2 md:p-4 font-bold text-[#854d0e] hidden xl:table-cell text-xs md:text-sm">
                         ID
                       </th>
-                      <th className="text-left p-4 font-bold text-[#854d0e]">
+                      <th className="text-left p-2 md:p-4 font-bold text-[#854d0e] text-xs md:text-sm">
                         Acción
                       </th>
                     </tr>
@@ -241,67 +241,47 @@ export class ClientList extends Component {
                         key={cliente.id}
                         className="hover:bg-[#fef3c7]/70 transition-colors"
                       >
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-[#15803d] rounded-full flex items-center justify-center text-[#fef3c7] font-bold text-sm">
+                        <td className="p-2 md:p-4">
+                          <div className="flex items-center gap-2 md:gap-3">
+                            <div className="w-7 h-7 md:w-9 md:h-9 bg-[#15803d] rounded-full flex items-center justify-center text-[#fef3c7] font-bold text-xs md:text-sm">
                               {cliente.display_name?.[0]?.toUpperCase() || "?"}
                             </div>
-                            <span className="font-bold text-[#5c3a21]">
+                            <span className="font-bold text-[#5c3a21] text-xs md:text-sm truncate max-w-[80px] md:max-w-none">
                               {cliente.display_name || "Sin nombre"}
                             </span>
                           </div>
                         </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-1.5">
-                            <Mail className="w-3.5 h-3.5 text-gray-400" />
-                            <span className="text-gray-600">
-                              {cliente.email || "—"}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                              cliente.user_role === "admin"
-                                ? "bg-[#eab308]/20 text-[#854d0e] border border-[#eab308]/50"
-                                : "bg-[#15803d]/10 text-[#15803d] border border-[#15803d]/30"
-                            }`}
-                          >
-                            <Shield className="w-3 h-3" />
-                            {cliente.user_role === "admin"
-                              ? "Admin"
-                              : "Cliente"}
+                        <td className="p-2 md:p-4 hidden sm:table-cell">
+                          <span className="text-gray-600 text-xs md:text-sm truncate max-w-[100px] md:max-w-none block">
+                            {cliente.email || "—"}
                           </span>
                         </td>
-                        <td className="p-4 text-gray-500 hidden md:table-cell">
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                            {this.formatearFecha(cliente.created_at)}
-                          </div>
+                        <td className="p-2 md:p-4">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-xs font-bold ${
+                            cliente.user_role === "admin"
+                              ? "bg-[#eab308]/20 text-[#854d0e] border border-[#eab308]/50"
+                              : "bg-[#15803d]/10 text-[#15803d] border border-[#15803d]/30"
+                          }`}>
+                            <Shield className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                            {cliente.user_role === "admin" ? "Admin" : "Cliente"}
+                          </span>
                         </td>
-                        <td className="p-4 text-gray-400 text-xs hidden md:table-cell font-mono">
+                        <td className="p-2 md:p-4 text-gray-500 hidden lg:table-cell text-xs">
+                          {this.formatearFecha(cliente.created_at)}
+                        </td>
+                        <td className="p-2 md:p-4 text-gray-400 text-xs hidden xl:table-cell font-mono">
                           #{cliente.id?.slice(0, 8)}
                         </td>
-                        <td className="p-4">
+                        <td className="p-2 md:p-4">
                           {cliente.user_role === "admin" ? (
-                            <button
-                              onClick={() => this.cambiarRol(cliente, "cliente")}
-                              disabled={actualizando === cliente.id}
-                              className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white font-bold py-1.5 px-2.5 rounded-lg border-2 border-[#5c3a21] text-xs transition-all active:translate-y-0.5 active:shadow-none disabled:opacity-50 cursor-pointer"
-                              title="Quitar permisos de administrador"
-                            >
-                              <UserX className="w-3.5 h-3.5" />
-                              Quitar Admin
+                            <button onClick={() => this.cambiarRol(cliente, "cliente")} disabled={actualizando === cliente.id} className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white font-bold py-1 md:py-1.5 px-1.5 md:px-2.5 rounded-lg border-2 border-[#5c3a21] text-xs transition-all active:translate-y-0.5 active:shadow-none disabled:opacity-50 cursor-pointer" title="Quitar permisos de administrador">
+                              <UserX className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                              <span className="hidden md:inline">Quitar Admin</span>
                             </button>
                           ) : (
-                            <button
-                              onClick={() => this.cambiarRol(cliente, "admin")}
-                              disabled={actualizando === cliente.id}
-                              className="flex items-center gap-1 bg-[#eab308] hover:bg-[#ca8a04] text-[#854d0e] font-bold py-1.5 px-2.5 rounded-lg border-2 border-[#5c3a21] text-xs transition-all active:translate-y-0.5 active:shadow-none disabled:opacity-50 cursor-pointer"
-                              title="Hacer administrador"
-                            >
-                              <UserCheck className="w-3.5 h-3.5" />
-                              Hacer Admin
+                            <button onClick={() => this.cambiarRol(cliente, "admin")} disabled={actualizando === cliente.id} className="flex items-center gap-1 bg-[#eab308] hover:bg-[#ca8a04] text-[#854d0e] font-bold py-1 md:py-1.5 px-1.5 md:px-2.5 rounded-lg border-2 border-[#5c3a21] text-xs transition-all active:translate-y-0.5 active:shadow-none disabled:opacity-50 cursor-pointer" title="Hacer administrador">
+                              <UserCheck className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                              <span className="hidden md:inline">Hacer Admin</span>
                             </button>
                           )}
                         </td>
