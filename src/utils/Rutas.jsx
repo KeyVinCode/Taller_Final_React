@@ -1,6 +1,6 @@
 // src/utils/Rutas.jsx
 import React, { Component } from 'react'
-import { Routes, Route, useParams } from 'react-router-dom'
+import { Routes, Route, useParams, useLocation, useSearchParams } from 'react-router-dom'
 import LandingPage from '../components/Landing/LandingPage'
 import Login from '../components/auth/Login'
 import Register from '../components/auth/Register'
@@ -14,6 +14,7 @@ import ClientList from '../components/admin/ClientList'
 import OrderList from '../components/admin/OrderList'
 import AdminOrderDetail from '../components/admin/AdminOrderDetail'
 import DiagnosticoPage from '../pages/DiagnosticoPage'
+import NotFoundPage from '../pages/NotFoundPage'
 import AuthGuard from '../components/common/AuthGuard'
 
 /**
@@ -26,8 +27,17 @@ function withParams(Component) {
   };
 }
 
+function withLocation(Component) {
+  return function WrappedComponent(props) {
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
+    return <Component {...props} location={location} searchParams={searchParams} />;
+  };
+}
+
 const OrderDetailWithParams = withParams(OrderDetail);
 const AdminOrderDetailWithParams = withParams(AdminOrderDetail);
+const NotFoundPageWithLocation = withLocation(NotFoundPage);
 
 export class Rutas extends Component {
   render() {
@@ -44,7 +54,9 @@ export class Rutas extends Component {
           <Route path="/admin/clientes" element={<AdminGuard><ClientList/></AdminGuard>}/>
           <Route path="/admin/pedidos" element={<AdminGuard><OrderList/></AdminGuard>}/>
           <Route path="/admin/pedidos/:id" element={<AdminGuard><AdminOrderDetailWithParams/></AdminGuard>}/>
-          <Route path="/diagnostico" element={<DiagnosticoPage/>}/>
+          <Route path="/diagnostico" element={<AuthGuard><DiagnosticoPage/></AuthGuard>}/>
+          <Route path="/error" element={<NotFoundPageWithLocation/>}/>
+          <Route path="*" element={<NotFoundPageWithLocation/>}/>
         </Routes>
     )
   }

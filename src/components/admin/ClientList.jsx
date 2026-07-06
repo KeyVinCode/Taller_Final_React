@@ -8,9 +8,14 @@ import {
   Calendar,
   Shield,
   ArrowLeft,
+  Edit3,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 import { supabase } from "../../utils/supabaseClient";
 import { AuthContext } from "../../context/AuthContext";
+import Paginacion from "./Paginacion";
+import { toast } from "react-toastify";
 
 export class ClientList extends Component {
   static contextType = AuthContext;
@@ -22,6 +27,10 @@ export class ClientList extends Component {
       cargando: true,
       error: null,
       busqueda: "",
+      paginaActual: 1,
+      registrosPorPagina: 8,
+      editandoId: null,
+      actualizando: null,
     };
   }
 
@@ -59,11 +68,70 @@ export class ClientList extends Component {
   };
 
   handleBusqueda = (e) => {
-    this.setState({ busqueda: e.target.value });
+    this.setState({ busqueda: e.target.value, paginaActual: 1 });
+  };
+
+  handleCambiarPagina = (pagina) => {
+    this.setState({ paginaActual: pagina });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  cambiarRol = async (cliente, nuevoRol) => {
+    if (this.state.actualizando) return;
+
+      // Si va a quitar admin, verificar que haya al menos otro admin
+      if (cliente.user_role === "admin" && nuevoRol === "cliente") {
+        const adminsRestantes = this.state.clientes.filter(
+          (c) => c.user_role === "admin" && c.id !== cliente.id
+        );
+        if (adminsRestantes.length === 0) {
+          toast.error("❌ No puedes quitar el último administrador. Debe haber al menos un admin en el sistema.");
+          return;
+        }
+      }
+
+    this.setState({ actualizando: cliente.id });
+
+    try {
+      // 1. Restaurar sesión para que la política UPDATE funcione
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+        });
+      }
+
+      // 2. Actualizar la tabla profiles
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ user_role: nuevoRol })
+        .eq("id", cliente.id);
+
+      if (profileError) {
+        // Si el error es por RLS (política UPDATE faltante), mostrar mensaje claro
+        if (profileError.code === "42501") {
+          alert("⚠️ No hay permisos para actualizar roles. Ejecuta en SQL Editor:\n\nCREATE POLICY \"Admins actualizan roles\" ON public.profiles FOR UPDATE USING ((SELECT user_role FROM public.profiles WHERE id = auth.uid()) = 'admin');");
+          throw new Error("Política UPDATE faltante en profiles");
+        }
+        throw profileError;
+      }
+
+      // 3. Actualizar estado local
+      this.setState((prevState) => ({
+        clientes: prevState.clientes.map((c) =>
+          c.id === cliente.id ? { ...c, user_role: nuevoRol } : c
+        ),
+        actualizando: null,
+      }));
+    } catch (error) {
+      console.error("❌ Error al cambiar rol:", error.message);
+      this.setState({ actualizando: null });
+    }
   };
 
   render() {
-    const { clientes, cargando, error, busqueda } = this.state;
+    const { clientes, cargando, error, busqueda, paginaActual, registrosPorPagina, actualizando } = this.state;
 
     // Filtrar clientes por búsqueda
     const clientesFiltrados = clientes.filter((c) => {
@@ -74,6 +142,11 @@ export class ClientList extends Component {
         c.user_role?.toLowerCase().includes(termino)
       );
     });
+
+    // Paginación
+    const totalPaginas = Math.ceil(clientesFiltrados.length / registrosPorPagina);
+    const inicio = (paginaActual - 1) * registrosPorPagina;
+    const clientesPaginados = clientesFiltrados.slice(inicio, inicio + registrosPorPagina);
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#60a5fa] via-[#93c5fd] to-[#bfdbfe] flex flex-col font-stardewFont">
@@ -157,10 +230,13 @@ export class ClientList extends Component {
                       <th className="text-left p-4 font-bold text-[#854d0e] hidden md:table-cell">
                         ID
                       </th>
+                      <th className="text-left p-4 font-bold text-[#854d0e]">
+                        Acción
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#854d0e]/10">
-                    {clientesFiltrados.map((cliente) => (
+                    {clientesPaginados.map((cliente) => (
                       <tr
                         key={cliente.id}
                         className="hover:bg-[#fef3c7]/70 transition-colors"
@@ -206,10 +282,38 @@ export class ClientList extends Component {
                         <td className="p-4 text-gray-400 text-xs hidden md:table-cell font-mono">
                           #{cliente.id?.slice(0, 8)}
                         </td>
+                        <td className="p-4">
+                          {cliente.user_role === "admin" ? (
+                            <button
+                              onClick={() => this.cambiarRol(cliente, "cliente")}
+                              disabled={actualizando === cliente.id}
+                              className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white font-bold py-1.5 px-2.5 rounded-lg border-2 border-[#5c3a21] text-xs transition-all active:translate-y-0.5 active:shadow-none disabled:opacity-50 cursor-pointer"
+                              title="Quitar permisos de administrador"
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                              Quitar Admin
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => this.cambiarRol(cliente, "admin")}
+                              disabled={actualizando === cliente.id}
+                              className="flex items-center gap-1 bg-[#eab308] hover:bg-[#ca8a04] text-[#854d0e] font-bold py-1.5 px-2.5 rounded-lg border-2 border-[#5c3a21] text-xs transition-all active:translate-y-0.5 active:shadow-none disabled:opacity-50 cursor-pointer"
+                              title="Hacer administrador"
+                            >
+                              <UserCheck className="w-3.5 h-3.5" />
+                              Hacer Admin
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                <Paginacion
+                  paginaActual={paginaActual}
+                  totalPaginas={totalPaginas}
+                  onCambiarPagina={this.handleCambiarPagina}
+                />
               </div>
             )}
           </div>

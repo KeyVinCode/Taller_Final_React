@@ -329,11 +329,81 @@ En el header de `ShopPage` se muestra:
   - 📋 Conteo de registros en `profiles` y `orders`
   - ❌ Errores RLS (código 42501)
 - Interfaz tipo terminal con colores (verde/rojo/amarillo)
-- Sin autenticación requerida para facilitar el debugging
+- Protegida con `AuthGuard` (requiere sesión activa)
 
 ### Fase 18: Protección de Rutas Admin Mejorada
 
 **AdminGuard:** Ahora fuerza la restauración de sesión de Supabase en `componentDidMount()` antes de renderizar los componentes hijos, evitando que las políticas RLS bloqueen consultas por falta de sesión activa.
+
+### Fase 19: Protección de Rutas para Usuarios (AuthGuard)
+
+**AuthGuard (`src/components/common/AuthGuard.jsx`):**
+- Nuevo componente que protege rutas que requieren sesión activa (cart, orders, order detail)
+- Si el usuario no está logueado, muestra un mensaje temático con botones "Iniciar sesión" e "Ir a la Tienda"
+- Diferente de `AdminGuard` (para admins) y `AuthGuard` (para cualquier usuario logueado)
+
+### Fase 20: Página de Error Mejorada con Códigos HTTP
+
+**NotFoundPage (`/error` y `*`):**
+- Detecta y muestra **5 tipos de error**: 400, 401, 403, 404, 500
+- Cada error tiene su propio icono, color y descripción temática
+- Código de error grande como decoración de fondo
+- Panel técnico con mensaje de error si está disponible
+- Botones de acción contextuales según el error (ej: 401 → "Iniciar Sesión")
+- Función helper `redirigirError()` para usar desde cualquier componente
+- Ruta comodín `*` que captura cualquier URL no definida
+
+### Fase 21: Paginación en Secciones de Admin
+
+**Paginacion (`src/components/admin/Paginacion.jsx`):**
+- Componente reutilizable con diseño temático (marrón/dorado)
+- Botones "Anterior"/"Siguiente" con iconos Chevron
+- Máximo 5 números de página visibles
+- Página actual resaltada con sombra 3D
+- Se oculta automáticamente si hay 1 sola página
+- Scroll suave al inicio de la tabla al cambiar de página
+
+**Aplicado en:**
+- `ClientList`: 8 registros por página
+- `OrderList`: 10 registros por página
+- El buscador reinicia a la página 1 automáticamente
+
+### Fase 22: Edición de Roles de Usuario (Admin)
+
+**ClientList (`/admin/clientes`):**
+- Nueva columna **"Acción"** con botones para cambiar el rol:
+  - 🟢 **"Hacer Admin"** — Convierte un cliente en administrador
+  - 🔴 **"Quitar Admin"** — Convierte un admin en cliente
+- **Validación crítica:** No permite eliminar al último administrador del sistema
+- El cambio se persiste en la tabla `profiles` de Supabase
+- Restauración de sesión automática antes del UPDATE
+- Si falta la política RLS de UPDATE, muestra el SQL necesario
+
+### Fase 23: Corrección de Políticas RLS (Seguridad)
+
+**Problema:** Las políticas RLS originales usaban `auth.jwt() -> 'user_metadata' ->> 'user_role'` para verificar roles, lo cual es **inseguro** porque el usuario final puede modificar sus propios metadatos.
+
+**Solución:** Se reemplazaron todas las políticas para consultar directamente la tabla `profiles`:
+
+```sql
+-- Ejemplo: política SEGURA usando la tabla profiles
+CREATE POLICY "Leer pedidos"
+  ON public.orders FOR SELECT
+  USING (auth.role() = 'authenticated' AND (
+    auth.uid() = usuario_id OR
+    (SELECT user_role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  ));
+```
+
+**Políticas corregidas:**
+| Tabla | Operación | Política |
+|-------|-----------|----------|
+| `profiles` | SELECT | `Leer perfiles` |
+| `profiles` | INSERT | `Insertar perfil propio` |
+| `profiles` | UPDATE | `Admins actualizan roles` |
+| `orders` | SELECT | `Leer pedidos` |
+| `orders` | INSERT | `Crear pedidos` |
+| `orders` | UPDATE | `Admins actualizan pedidos` |
 
 ---
 
@@ -359,8 +429,8 @@ En el header de `ShopPage` se muestra:
 - [x] **Dashboard de administración** con resumen de datos y nombres de clientes
 - [x] **Navbar exclusivo para admin** con icono User y botón Salir
 - [x] **Protección de rutas Admin** (AdminGuard) con navbar automático
-- [x] **Listado de clientes** con buscador en vivo (solo admin)
-- [x] **Listado de pedidos** con tabla completa, edición por modal y confirmación
+- [x] **Listado de clientes** con buscador en vivo, paginación y edición de roles
+- [x] **Listado de pedidos** con tabla completa, paginación, edición por modal y confirmación
 - [x] **Modal de confirmación personalizado** (sin alertas del navegador)
 - [x] **Validaciones de estado** (rechazado bloqueado, aprobado no vuelve a pendiente)
 - [x] **Bloqueo de scroll** en modales
@@ -368,6 +438,11 @@ En el header de `ShopPage` se muestra:
 - [x] **Iniciar sesión desde el catálogo** sin necesidad de volver al landing
 - [x] **Header adaptable** según sesión (logueado vs visitante)
 - [x] **Restauración de sesión Supabase** al recargar la página
+- [x] **Protección de rutas para usuarios** (AuthGuard para cart, orders, order detail)
+- [x] **Página de error** con detección de códigos HTTP (400, 401, 403, 404, 500)
+- [x] **Paginación** reutilizable en listados de admin
+- [x] **Edición de roles** (Hacer Admin/Quitar Admin) con validación anti-bloqueo
+- [x] **Políticas RLS seguras** (usando tabla `profiles` en lugar de `user_metadata`)
 - [x] **Alertas visuales** con React Toastify
 - [x] **Diseño responsive** (grid adaptable a móvil, tablet y escritorio)
 - [x] **Estilo temático** consistente con sombras 3D, bordes y paleta de colores

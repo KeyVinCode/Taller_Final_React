@@ -155,6 +155,8 @@ export class AuthProvider extends Component {
     }
     guardarUsuarioStorage(null);
     this.setState({ usuario: null });
+    // Redirigir al inicio después de cerrar sesión
+    window.location.href = "/";
   };
 
   /**

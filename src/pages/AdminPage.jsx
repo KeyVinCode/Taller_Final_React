@@ -83,10 +83,10 @@ export class AdminPage extends Component {
         .from("orders").select("*", { count: "exact", head: true });
       if (errTotalPedidos) throw errTotalPedidos;
 
-      // 3. Últimos 5 pedidos para la tabla resumen
-      const { data: pedidos, error: errPedidos } = await supabase
-        .from("orders").select("*").order("created_at", { ascending: false }).limit(5);
-      if (errPedidos) throw errPedidos;
+      // 3. Contar TODOS los pedidos por estado (sin limit)
+      const { data: todosLosPedidos, error: errTodosPedidos } = await supabase
+        .from("orders").select("*");
+      if (errTodosPedidos) throw errTodosPedidos;
 
       let totalProductos = 27;
       try {
@@ -97,11 +97,16 @@ export class AdminPage extends Component {
       const pedidosPorEstado = { pendiente: 0, aprobado: 0, rechazado: 0, enviado: 0, entregado: 0 };
       let ingresosTotales = 0;
 
-      (pedidos || []).forEach((p) => {
+      (todosLosPedidos || []).forEach((p) => {
         const estado = (p.estado || "pendiente").toLowerCase();
         if (pedidosPorEstado[estado] !== undefined) pedidosPorEstado[estado]++;
         ingresosTotales += p.total_precio || 0;
       });
+
+      // 4. Últimos 5 pedidos para la tabla resumen
+      const { data: pedidos, error: errPedidos } = await supabase
+        .from("orders").select("*").order("created_at", { ascending: false }).limit(5);
+      if (errPedidos) throw errPedidos;
 
       // Obtener los nombres de los perfiles de los usuarios (filtrando null/undefined)
       const idsUsuarios = [...new Set((pedidos || []).map((p) => p.usuario_id).filter(Boolean))];

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../../utils/supabaseClient";
 import { AuthContext } from "../../context/AuthContext";
+import Paginacion from "./Paginacion";
 
 const TASA_CAMBIO_COP = 4200;
 
@@ -54,6 +55,9 @@ export class OrderList extends Component {
       // Modal de confirmación personalizado
       confirmacionAbierta: false,
       estadoPendiente: null,
+      // Paginación
+      paginaActual: 1,
+      registrosPorPagina: 10,
     };
   }
 
@@ -367,8 +371,13 @@ export class OrderList extends Component {
     );
   }
 
+  handleCambiarPagina = (pagina) => {
+    this.setState({ paginaActual: pagina });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   render() {
-    const { pedidos, perfiles, cargando, error } = this.state;
+    const { pedidos, perfiles, cargando, error, paginaActual, registrosPorPagina } = this.state;
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#60a5fa] via-[#93c5fd] to-[#bfdbfe] flex flex-col font-stardewFont">
@@ -431,6 +440,11 @@ export class OrderList extends Component {
               </div>
             ) : (
               <div className="overflow-x-auto">
+                {(() => {
+                  const inicio = (paginaActual - 1) * registrosPorPagina;
+                  const pedidosPaginados = pedidos.slice(inicio, inicio + registrosPorPagina);
+                  return null;
+                })()}
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-[#fde68a]/50">
@@ -445,7 +459,10 @@ export class OrderList extends Component {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#854d0e]/10">
-                    {pedidos.map((pedido) => {
+                    {(() => {
+                      const inicio = (paginaActual - 1) * registrosPorPagina;
+                      return pedidos.slice(inicio, inicio + registrosPorPagina);
+                    })().map((pedido) => {
                       const estado = obtenerEstadoPedido(pedido.estado);
                       const EstadoIcono = estado.icono;
                       const perfil = perfiles[pedido.usuario_id];
@@ -539,6 +556,11 @@ export class OrderList extends Component {
                     })}
                   </tbody>
                 </table>
+                <Paginacion
+                  paginaActual={paginaActual}
+                  totalPaginas={Math.ceil(pedidos.length / registrosPorPagina)}
+                  onCambiarPagina={this.handleCambiarPagina}
+                />
               </div>
             )}
           </div>
